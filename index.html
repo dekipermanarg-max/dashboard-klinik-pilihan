@@ -50,7 +50,12 @@
 
     <section id="rekap" class="page">
       <div class="section-head"><div><span class="pill">DATA</span><h2>Rekap Klinik Pilihan</h2><p>Gunakan filter untuk melihat data yang tersimpan.</p></div></div>
-      <div class="panel filters"><label>Kelas<select id="filterClass"><option value="">Semua</option><option value="11">11</option><option value="12">12</option></select></label><label>Mapel<select id="filterSubject"><option value="">Semua</option></select></label><label>MT<select id="filterMt"><option value="">Semua</option></select></label></div>
+      <div class="panel filters">
+        <label>Kelas<select id="filterClass"><option value="">Semua</option><option value="11">11</option><option value="12">12</option></select></label>
+        <label>Mapel<select id="filterSubject"><option value="">Semua</option></select></label>
+        <label>MT<select id="filterMt"><option value="">Semua</option></select></label>
+        <label>Nama Siswa<select id="filterStudent"><option value="">Semua</option></select></label>
+      </div>
       <div class="panel table-wrap"><table><thead><tr><th>Tanggal</th><th>Kelas</th><th>Siswa</th><th>Mapel</th><th>MT</th><th>Kuis</th><th>Post Test</th></tr></thead><tbody id="dataBody"><tr><td colspan="7" class="empty">Memuat data…</td></tr></tbody></table></div>
     </section>
   </main>
