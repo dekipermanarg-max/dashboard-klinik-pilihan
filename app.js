@@ -6,6 +6,8 @@ function setOptions(el,items,placeholder='Pilih…'){el.innerHTML=`<option value
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function apiJsonp(action,extra={}){return new Promise((resolve,reject)=>{const cb='__klinikCb_'+Date.now()+'_'+Math.random().toString(36).slice(2);const script=document.createElement('script');const params=new URLSearchParams({action,callback:cb,_:Date.now(),...extra});let timer=setTimeout(()=>{cleanup();reject(new Error('API Google Sheets tidak merespons.'))},15000);function cleanup(){clearTimeout(timer);delete window[cb];script.remove()}window[cb]=data=>{cleanup();if(!data||!data.ok){reject(new Error(data?.error||'API mengembalikan error.'));return}resolve(data)};script.onerror=()=>{cleanup();reject(new Error('API Google Sheets tidak dapat diakses.'))};script.src=`${CONFIG.API_URL}?${params.toString()}`;document.head.appendChild(script)})}
 async function apiGet(action){const data=await apiJsonp(action);return data.rows||[]}
+function studentsForClass(k){return k==='11'?master.s11:k==='12'?master.s12:unique([...master.s11,...master.s12])}
+function updateStudentFilter(){const current=$('filterStudent').value;const list=studentsForClass($('filterClass').value);setOptions($('filterStudent'),list,'Semua');if(list.includes(current))$('filterStudent').value=current}
 async function load(){
   try{
     const m=await apiGet('master');
@@ -13,7 +15,7 @@ async function load(){
     master.mapel=unique(m.slice(1).map(r=>r[1]));
     master.s11=unique(m.slice(1).map(r=>r[2]));
     master.s12=unique(m.slice(1).map(r=>r[3]));
-    setOptions($('mtSelect'),master.mt);setOptions($('subjectSelect'),master.mapel);setOptions($('filterMt'),master.mt);setOptions($('filterSubject'),master.mapel);
+    setOptions($('mtSelect'),master.mt);setOptions($('subjectSelect'),master.mapel);setOptions($('filterMt'),master.mt,'Semua');setOptions($('filterSubject'),master.mapel,'Semua');updateStudentFilter();
     try{const d=await apiGet('db');rows=d.slice(1).filter(r=>r.some(Boolean)).map(r=>({id:r[0],date:r[1],kelas:r[2],siswa:r[3],mapel:r[4],mt:r[5],kuis:r[6],post:r[7]}));}catch(e){rows=[]}
     renderAll();
   }catch(e){toast(e.message);$('studentHint').textContent='Data master belum dapat dimuat.';}
@@ -28,12 +30,14 @@ function renderAll(){
 }
 function nums(a){return a.map(Number).filter(Number.isFinite)} function avg(a){return a.length?avgN(a).toFixed(1):'—'} function avgN(a){return a.reduce((x,y)=>x+y,0)/a.length} function delta(n){return `${n>=0?'+':''}${n.toFixed(1)}`}
 function renderStudents(){const k=$('classSelect').value;const list=k==='11'?master.s11:k==='12'?master.s12:[];$('studentHint').textContent=list.length?`${list.length} siswa tersedia.`:'Pilih kelas untuk menampilkan siswa.';if(!list.length){$('studentTable').innerHTML='<div class="empty">Belum ada siswa.</div>';return}$('studentTable').innerHTML='<div class="student-row head"><span></span><span>Nama Siswa</span><span>Nilai Kuis</span><span>Nilai Post Test</span></div>'+list.map((s,i)=>`<div class="student-row"><input class="pick" type="checkbox" data-i="${i}"><span>${esc(s)}</span><input class="quiz" type="number" min="0" max="100" step="1" placeholder="0–100"><input class="post" type="number" min="0" max="100" step="1" placeholder="0–100"></div>`).join('')}
-function renderTable(){const fc=$('filterClass').value,fs=$('filterSubject').value,fm=$('filterMt').value;const data=rows.filter(r=>(!fc||String(r.kelas)===fc)&&(!fs||r.mapel===fs)&&(!fm||r.mt===fm)).slice().reverse();$('dataBody').innerHTML=data.length?data.map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.kelas)}</td><td>${esc(r.siswa)}</td><td>${esc(r.mapel)}</td><td>${esc(r.mt)}</td><td>${esc(r.kuis)}</td><td>${esc(r.post)}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Belum ada data.</td></tr>'}
+function renderTable(){const fc=$('filterClass').value,fs=$('filterSubject').value,fm=$('filterMt').value,fu=$('filterStudent').value;const data=rows.filter(r=>(!fc||String(r.kelas)===fc)&&(!fs||r.mapel===fs)&&(!fm||r.mt===fm)&&(!fu||r.siswa===fu)).slice().reverse();$('dataBody').innerHTML=data.length?data.map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.kelas)}</td><td>${esc(r.siswa)}</td><td>${esc(r.mapel)}</td><td>${esc(r.mt)}</td><td>${esc(r.kuis)}</td><td>${esc(r.post)}</td></tr>`).join(''):'<tr><td colspan="7" class="empty">Belum ada data.</td></tr>'}
 function toast(t){const x=$('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),3000)}
 function setup(){
   document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')});
   document.querySelectorAll('[data-go="input"]').forEach(b=>b.onclick=()=>document.querySelector('[data-tab="input"]').click());
-  $('classSelect').onchange=renderStudents;$('selectAll').onclick=()=>document.querySelectorAll('.pick').forEach(x=>x.checked=true);$('refreshBtn').onclick=()=>load();['filterClass','filterSubject','filterMt'].forEach(id=>$(id).onchange=renderTable);
+  $('classSelect').onchange=renderStudents;$('selectAll').onclick=()=>document.querySelectorAll('.pick').forEach(x=>x.checked=true);$('refreshBtn').onclick=()=>load();
+  $('filterClass').onchange=()=>{updateStudentFilter();renderTable()};
+  ['filterSubject','filterMt','filterStudent'].forEach(id=>$(id).onchange=renderTable);
   $('sessionForm').onsubmit=async e=>{e.preventDefault();const picked=[...document.querySelectorAll('.student-row:not(.head)')].filter(r=>r.querySelector('.pick')?.checked);if(!picked.length){toast('Pilih minimal satu siswa.');return}if(!$('mtSelect').value||!$('subjectSelect').value||!$('classSelect').value||!$('date').value){toast('Lengkapi tanggal, kelas, MT, dan mapel.');return}const payload={date:$('date').value,kelas:$('classSelect').value,mt:$('mtSelect').value,mapel:$('subjectSelect').value,students:picked.map(r=>({siswa:r.children[1].textContent.trim(),kuis:r.querySelector('.quiz').value,post:r.querySelector('.post').value}))};try{$('saveStatus').textContent='Menyimpan…';const result=await apiJsonp('save',{payload:JSON.stringify(payload)});$('saveStatus').textContent=`Tersimpan ✓ (${result.count} siswa)`;toast('Data berhasil disimpan.');$('sessionForm').reset();$('date').value=new Date().toISOString().slice(0,10);renderStudents();setTimeout(load,500)}catch(err){$('saveStatus').textContent='Gagal menyimpan';toast(err.message)}};
   $('date').value=new Date().toISOString().slice(0,10);
 }
