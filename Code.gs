@@ -5,7 +5,7 @@ const MASTER_SHEET = 'MT SISWA MAPEL';
 function doGet(e) {
   try {
     const p = (e && e.parameter) || {};
-    const action = String(p.action || 'ping').toLowerCase();
+    const action = String(p.action || 'master').toLowerCase();
     const callback = String(p.callback || '').trim();
     let result;
 
