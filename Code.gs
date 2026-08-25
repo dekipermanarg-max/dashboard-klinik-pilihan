@@ -1,8 +1,16 @@
 const SPREADSHEET_ID = '1-ghFaPLJCAAgs9mcKXnBxXz9ycf8z5Ja-fVeGU4SNao';
 const DB_SHEET = 'DB_KLINIK_PILIHAN';
+const MASTER_SHEET = 'MT SISWA MAPEL';
 
-function doGet() {
-  return json_({ ok: true, service: 'Klinik Mapel Pilihan API' });
+function doGet(e) {
+  try {
+    const action = String((e && e.parameter && e.parameter.action) || 'ping').toLowerCase();
+    if (action === 'master') return json_({ ok: true, rows: readSheet_(MASTER_SHEET) });
+    if (action === 'db') return json_({ ok: true, rows: readSheet_(DB_SHEET) });
+    return json_({ ok: true, service: 'Klinik Mapel Pilihan API' });
+  } catch (err) {
+    return json_({ ok: false, error: err.message });
+  }
 }
 
 function doPost(e) {
@@ -36,6 +44,14 @@ function doPost(e) {
   } catch (err) {
     return json_({ ok: false, error: err.message });
   }
+}
+
+function readSheet_(name) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(name);
+  if (!sheet) throw new Error('Sheet ' + name + ' tidak ditemukan.');
+  const values = sheet.getDataRange().getDisplayValues();
+  return values;
 }
 
 function normalizeScore_(value) {
