@@ -1,4 +1,4 @@
-const CONFIG={SHEET_ID:'1-ghFaPLJCAAgs9mcKXnBxXz9ycf8z5Ja-fVeGU4SNao',MASTER_SHEET:'MT SISWA MAPEL',DB_SHEET:'DB_KLINIK_PILIHAN',API_URL:''};
+const CONFIG={SHEET_ID:'1-ghFaPLJCAAgs9mcKXnBxXz9ycf8z5Ja-fVeGU4SNao',MASTER_SHEET:'MT SISWA MAPEL',DB_SHEET:'DB_KLINIK_PILIHAN',API_URL:'https://script.google.com/macros/s/AKfycbx23izdGlUWNU3217-Zxv7NaW79nkgky-h4lCO4KHgqftuSWrXc74qywm7v8_SDeDnDTw/exec'};
 let master={mt:[],mapel:[],s11:[],s12:[]}, rows=[];
 const $=id=>document.getElementById(id);
 function gvizUrl(sheet){return `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheet)}`}
