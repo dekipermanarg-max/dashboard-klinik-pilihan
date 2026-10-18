@@ -13,6 +13,8 @@ function doGet(e) {
       result = { ok: true, rows: readSheet_(MASTER_SHEET) };
     } else if (action === 'db') {
       result = { ok: true, rows: readSheet_(DB_SHEET) };
+    } else if (action === 'addmaster') {
+      result = addMaster_(p);
     } else if (action === 'save') {
       const payload = JSON.parse(p.payload || '{}');
       result = save_(payload);
@@ -33,6 +35,27 @@ function doPost(e) {
   } catch (err) {
     return json_({ ok: false, error: err.message });
   }
+}
+
+function addMaster_(p) {
+  const type = String(p.type || '').trim().toLowerCase();
+  const name = String(p.name || '').trim();
+  const kelas = String(p.kelas || '').trim();
+  if (!name) throw new Error('Nama tidak boleh kosong.');
+  if (type !== 'student' && type !== 'mt') throw new Error('Jenis nama tidak valid.');
+  if (type === 'student' && kelas !== '11' && kelas !== '12') throw new Error('Pilih kelas siswa.');
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(MASTER_SHEET);
+  if (!sheet) throw new Error('Sheet master tidak ditemukan.');
+  const data = sheet.getDataRange().getDisplayValues();
+  const col = type === 'mt' ? 0 : (kelas === '11' ? 2 : 3);
+  if (data.slice(1).some(r => String(r[col] || '').trim().toLocaleLowerCase('id') === name.toLocaleLowerCase('id'))) {
+    throw new Error('Nama tersebut sudah ada di daftar.');
+  }
+  const row = ['', '', '', ''];
+  row[col] = name;
+  sheet.appendRow(row);
+  return { ok: true, name: name, type: type };
 }
 
 function save_(payload) {
